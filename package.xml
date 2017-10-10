@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package>
+  <name>javad_delta</name>
+  <version>0.1.0</version>
+  <description>JAVAD DELTA Driver</description>
+
+  <maintainer email="mizuno.naoki@rm.is.tohoku.ac.jp">Naoki Mizuno</maintainer>
+
+  <license>MIT</license>
+
+  <url type="website">https://github.com/tado-aev/javad_delta</url>
+
+  <author>Naoki Mizuno</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>nmea_msgs</run_depend>
+  <run_depend>nmea_navsat_driver</run_depend>
+  <run_depend>python-serial</run_depend>
+</package>

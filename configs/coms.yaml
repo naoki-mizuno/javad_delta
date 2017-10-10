@@ -1,0 +1,7 @@
+ntrip_server: ntrip.jenoba.jp
+ntrip_stream: JVR30
+ntrip_port: 2101
+ntrip_user: foo
+ntrip_password: bar
+serial_port: /dev/ttyUSB1
+serial_baud: 115200
