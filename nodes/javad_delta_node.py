@@ -22,3 +22,4 @@ client = javad_delta.NTRIPClient(ntrip_configs, serial_configs)
 
 while not rospy.is_shutdown():
     client.publish_gga_sentence()
+client.stop = True
