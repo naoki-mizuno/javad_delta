@@ -112,6 +112,7 @@ class NTRIPClient:
                 rospy.logerr(err)
                 continue
             self.read_rtcm(response)
+        self.connection.close()
 
     def read_rtcm(self, response):
         # Keep reading RTCM and send it to the receiver
