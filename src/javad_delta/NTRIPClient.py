@@ -6,7 +6,7 @@ from nmea_msgs.msg import Sentence
 from serial import Serial, SerialException
 
 from threading import Thread, Lock
-from httplib import HTTPConnection
+from httplib import HTTPConnection, HTTPException
 from base64 import b64encode
 
 
@@ -16,6 +16,7 @@ class NTRIPClient:
         self.serial_configs = serial_configs
         self.gga_lock = Lock()
         self.latest_gga = ''
+        self.has_new_gga = False
         self.leftover_gga = ''
         self.nmea_pub = rospy.Publisher('nmea_sentence',
                                         Sentence,
@@ -68,41 +69,48 @@ class NTRIPClient:
                 rospy.logwarn('Serial port read failed')
         with self.gga_lock:
             self.latest_gga = data
-            self.new_gga_data = True
+            self.has_new_gga = True
         return data
 
     def rtcm_thread_func(self):
+        # Open connection
         while not rospy.is_shutdown():
+            try:
+                self.connection.request('GET', '/' + self.ntrip_configs['stream'])
+                response = self.connection.getresponse()
+                if response.status == 200:
+                    break
+            except HTTPException:
+                rospy.logerr("Couldn't send request")
+
+        # Get RTCM data
+        while not rospy.is_shutdown():
+            # Get latest GGA
             with self.gga_lock:
                 gga = self.latest_gga
-                self.new_gga_data = False
+                self.has_new_gga = False
             if not NTRIPClient.is_good_gga(gga, bad_data_quality=['0']):
-                # Invalid GGA data
                 continue
 
             # Send to NTRIP server
             try:
-                self.connection.request('GET',
-                                        '/' + self.ntrip_configs['stream'],
-                                        gga,
-                                        self.header)
-            except Exception:
-                rospy.logerr('Couldn\'t send request')
+                self.connection.putheader(self.header)
+                self.connection.endheaders()
+                self.connection.send(gga)
+            except HTTPException:
+                rospy.logerr("Couldn't send GGA sentence")
                 continue
 
-            response = None
+            # Parse response
             try:
                 response = self.connection.getresponse()
-            except Exception:
-                rospy.logerr('Couldn\'t get response')
+            except HTTPException:
+                rospy.logerr("Couldn't get response")
                 continue
-
             if response.status != 200:
                 err = 'NTRIP Server response: {0}'.format(response.status)
                 rospy.logerr(err)
                 continue
-
-            #rospy.loginfo('Received data from server')
             self.read_rtcm(response)
 
     def read_rtcm(self, response):
@@ -110,13 +118,12 @@ class NTRIPClient:
         while True:
             with self.gga_lock:
                 # Return if there's newer GGA
-                if rospy.is_shutdown() or self.new_gga_data:
+                if rospy.is_shutdown() or self.has_new_gga:
                     return
 
             rtcm = response.read()
             # Write to GNSS receiver
             with self.serial_lock:
-                sys.stdout.write(rtcm)
                 self.serial.write(rtcm)
 
     @staticmethod
