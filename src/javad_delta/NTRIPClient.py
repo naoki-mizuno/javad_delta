@@ -12,6 +12,10 @@ from base64 import b64encode
 
 class NTRIPClient:
     def __init__(self, ntrip_configs, serial_configs):
+        self.__init_gga__(serial_configs)
+        self.__init_rtcm__(ntrip_configs)
+
+    def __init_gga__(self, serial_configs):
         # GGA
         self.serial_configs = serial_configs
         self.gga_lock = Lock()
@@ -32,6 +36,7 @@ class NTRIPClient:
             rospy.signal_shutdown("Error opening serial: %s" % e)
             raise SystemExit
 
+    def __init_rtcm__(self, ntrip_configs):
         # RTCM
         self.ntrip_configs = ntrip_configs
         user_pass = '{0}:{1}'.format(ntrip_configs['user'],
