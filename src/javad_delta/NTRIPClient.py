@@ -36,15 +36,15 @@ class NTRIPClient:
         self.ntrip_configs = ntrip_configs
         user_pass = '{0}:{1}'.format(ntrip_configs['user'],
                                      ntrip_configs['password'])
-        self.header = {
-            'Ntrip-Version': 'Ntrip/2.0',
-            'User-Agent': 'NTRIP ntrip_client',
-            'Connection': 'close',
-            'Authorization': 'Basic ' + b64encode(user_pass)
-        }
+        self.header = ''
+        self.header += 'GET /{0} HTTP/1.0\r\n'.format(ntrip_configs['stream'])
+        self.header += 'User-Agent: NTRIP ntrip_client\r\n'
+        self.header += 'Connection: close\r\n'
+        self.header += 'Accept: */*'
+        self.header += 'Authorization: Basic {0}'.format(b64encode(user_pass))
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect_to_server(ntrip_configs['server'],
-                               int(ntrip_configs['port']))
+                               ntrip_configs['port'])
         self.connection.settimeout(10)
         self.rtcm_thread = Thread(target=self.rtcm_thread_func,
                                   name='rtcm_thread')
@@ -78,13 +78,19 @@ class NTRIPClient:
         retries = 0
 
         while retries < max_retries:
-            err_indicator = self.connection.connect_ex((server, port))
+            err_indicator = self.connection.connect_ex((server, int(port)))
             if err_indicator == 0:
                 return
             retries += 1
         rospy.logerr("Couldn't connect to server")
 
     def rtcm_thread_func(self):
+        status = -1
+        while status != 200 and not rospy.is_shutdown():
+            self.connect_to_server(self.ntrip_configs['server'],
+                                   self.ntrip_configs['port'])
+            status = self.send_headers()
+
         # Get RTCM data
         while not rospy.is_shutdown():
             # Get latest GGA
@@ -96,42 +102,50 @@ class NTRIPClient:
 
             # Send to NTRIP server
             try:
-                self.connection.request('GET', '/' +
-                                        self.ntrip_configs['stream'],
-                                        gga,
-                                        headers=self.header)
-            except HTTPException as e:
+                self.connection.sendall(gga)
+            except Exception as e:
                 rospy.logerr("Couldn't send GGA sentence")
                 continue
 
             # Parse response
             try:
-                response = self.connection.getresponse()
-            except HTTPException:
+                self.read_rtcm()
+            except Exception:
                 rospy.logerr("Invalid response")
                 continue
-            if response.status != 200:
-                err = 'NTRIP Server response: {0}'.format(response.status)
-                rospy.logerr(err)
-                continue
-            self.read_rtcm(response)
         self.connection.close()
 
-    def read_rtcm(self, response):
+    def send_headers(self):
+        self.connection.sendall(self.header)
+        header_lines = self.connection.recv(4096).split('\r\n')
+        for line in header_lines:
+            if line.find("SOURCETABLE") >= 0:
+                rospy.logerr("Mount point does not exist")
+            elif line.find("401 Unauthorized") >= 0:
+                return 401
+            elif line.find("404 Not Found") >= 0:
+                return 404
+            elif line.find("ICY 200 OK") >= 0:
+                return 200
+            elif line.find("HTTP/1.0 200 OK") >= 0:
+                return 200
+            elif line.find("HTTP/1.1 200 OK") >= 0:
+                return 200
+        return -1
+
+    def read_rtcm(self):
         # Keep reading RTCM and send it to the receiver
         while True:
-            rtcm = response.read(1024)
+            rtcm = self.connection.recv(1024)
             rospy.logerr(rtcm)
             # Write to GNSS receiver
             with self.serial_lock:
                 self.serial.write(rtcm)
 
-            if rospy.is_shutdown():
-                return
             with self.gga_lock:
-               # Return if there's newer GGA
-               if rospy.is_shutdown() or self.has_new_gga:
-                   return
+                # Return if there's newer GGA
+                if rospy.is_shutdown() or self.has_new_gga:
+                    return
 
     @staticmethod
     def is_good_gga(gga, bad_data_quality=None):
