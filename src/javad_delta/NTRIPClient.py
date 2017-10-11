@@ -62,20 +62,11 @@ class NTRIPClient:
         self.nmea_pub.publish(msg)
 
     def read_gga_sentence(self):
-        gga = self.leftover_gga
-
-        while not rospy.is_shutdown():
-            with self.serial_lock:
-                data = self.serial.read(128)
-            pos = data.find('\r\n')
-            if pos != -1:
-                gga += data[:pos]
-                self.leftover_gga = data[pos + 2:]
-                with self.gga_lock:
-                    self.latest_gga = gga
-                return gga
-            else:
-                gga += data
+        with self.serial_lock:
+            data = self.serial.readline()
+        with self.gga_lock:
+            self.latest_gga = data
+        return data
 
     def rtcm_thread_func(self):
         while not rospy.is_shutdown():
