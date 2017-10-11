@@ -6,7 +6,7 @@ from nmea_msgs.msg import Sentence
 from serial import Serial, SerialException
 
 from threading import Thread, Lock
-from httplib import HTTPConnection, HTTPException
+import socket
 from base64 import b64encode
 
 
@@ -42,8 +42,10 @@ class NTRIPClient:
             'Connection': 'close',
             'Authorization': 'Basic ' + b64encode(user_pass)
         }
-        self.connection = HTTPConnection(ntrip_configs['server'],
-                                         int(ntrip_configs['port']))
+        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connect_to_server(ntrip_configs['server'],
+                               int(ntrip_configs['port']))
+        self.connection.settimeout(10)
         self.rtcm_thread = Thread(target=self.rtcm_thread_func,
                                   name='rtcm_thread')
         self.rtcm_thread.start()
@@ -71,6 +73,16 @@ class NTRIPClient:
             self.latest_gga = data
             self.has_new_gga = True
         return data
+
+    def connect_to_server(self, server, port, max_retries=5):
+        retries = 0
+
+        while retries < max_retries:
+            err_indicator = self.connection.connect_ex((server, port))
+            if err_indicator == 0:
+                return
+            retries += 1
+        rospy.logerr("Couldn't connect to server")
 
     def rtcm_thread_func(self):
         # Get RTCM data
