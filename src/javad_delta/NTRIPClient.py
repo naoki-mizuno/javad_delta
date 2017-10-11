@@ -43,7 +43,8 @@ class NTRIPClient:
         }
         self.connection = HTTPConnection(ntrip_configs['server'],
                                          int(ntrip_configs['port']))
-        self.rtcm_thread = Thread(self.rtcm_thread_func)
+        self.rtcm_thread = Thread(target=self.rtcm_thread_func,
+                                  name='rtcm_thread')
         self.rtcm_thread.start()
 
     def publish_gga_sentence(self):
