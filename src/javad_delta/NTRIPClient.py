@@ -45,11 +45,10 @@ class NTRIPClient:
         self.header += 'GET /{0} HTTP/1.0\r\n'.format(ntrip_configs['stream'])
         self.header += 'User-Agent: NTRIP ntrip_client\r\n'
         self.header += 'Connection: close\r\n'
-        self.header += 'Accept: */*'
-        self.header += 'Authorization: Basic {0}'.format(b64encode(user_pass))
+        self.header += 'Accept: */*\r\n'
+        self.header += 'Authorization: Basic {0}\r\n'.format(b64encode(user_pass))
+        self.header += '\r\n'
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connect_to_server(ntrip_configs['server'],
-                               ntrip_configs['port'])
         self.connection.settimeout(10)
         self.rtcm_thread = Thread(target=self.rtcm_thread_func,
                                   name='rtcm_thread')
@@ -79,22 +78,23 @@ class NTRIPClient:
             self.has_new_gga = True
         return data
 
-    def connect_to_server(self, server, port, max_retries=5):
-        retries = 0
-
-        while retries < max_retries:
-            err_indicator = self.connection.connect_ex((server, int(port)))
-            if err_indicator == 0:
-                return
-            retries += 1
-        rospy.logerr("Couldn't connect to server")
+    def connect_to_server(self, server, port):
+        err_indicator = self.connection.connect_ex((server, int(port)))
+        if err_indicator == 0:
+            return
+        rospy.logerr('Server connection error: {0}'.format(err_indicator))
 
     def rtcm_thread_func(self):
-        status = -1
-        while status != 200 and not rospy.is_shutdown():
+        while not rospy.is_shutdown():
             self.connect_to_server(self.ntrip_configs['server'],
                                    self.ntrip_configs['port'])
-            status = self.send_headers()
+            try:
+                status = self.send_headers()
+            except Exception:
+                rospy.logerr('Error when sending headers')
+            if status == 200:
+                rospy.loginfo('Successfully sent headers')
+                break
 
         # Get RTCM data
         while not rospy.is_shutdown():
@@ -107,21 +107,21 @@ class NTRIPClient:
 
             # Send to NTRIP server
             try:
-                self.connection.sendall(gga)
+                self.connection.send(gga)
             except Exception as e:
-                rospy.logerr("Couldn't send GGA sentence")
+                rospy.logerr('Failed to send GGA sentence')
                 continue
 
             # Parse response
             try:
                 self.read_rtcm()
             except Exception:
-                rospy.logerr("Invalid response")
+                rospy.logerr('Failed to read RTCM')
                 continue
         self.connection.close()
 
     def send_headers(self):
-        self.connection.sendall(self.header)
+        self.connection.send(self.header)
         header_lines = self.connection.recv(4096).split('\r\n')
         for line in header_lines:
             if line.find("SOURCETABLE") >= 0:
@@ -145,7 +145,7 @@ class NTRIPClient:
             rospy.logerr(rtcm)
             # Write to GNSS receiver
             with self.serial_lock:
-                self.serial.write(rtcm)
+                self.serial.write(rtcm.decode('ascii'))
 
             with self.gga_lock:
                 # Return if there's newer GGA
