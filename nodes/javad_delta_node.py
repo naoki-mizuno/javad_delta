@@ -7,6 +7,7 @@ import javad_delta
 rospy.init_node('javad_delta_node')
 
 ntrip_configs = {
+    'enable': rospy.get_param('~ntrip_enable'),
     'server': rospy.get_param('~ntrip_server'),
     'stream': rospy.get_param('~ntrip_stream'),
     'port': rospy.get_param('~ntrip_port'),

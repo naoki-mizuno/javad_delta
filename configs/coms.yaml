@@ -1,3 +1,4 @@
+ntrip_enable: True
 ntrip_server: ntrip.jenoba.jp
 ntrip_stream: JVR30
 ntrip_port: 2101

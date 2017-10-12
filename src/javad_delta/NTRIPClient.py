@@ -80,20 +80,25 @@ class NTRIPClient:
 
     def connect_to_server(self, server, port):
         err_indicator = self.connection.connect_ex((server, int(port)))
-        if err_indicator == 0:
-            return
-        rospy.logerr('Server connection error: {0}'.format(err_indicator))
+        return err_indicator
 
     def rtcm_thread_func(self):
         while not rospy.is_shutdown():
-            self.connect_to_server(self.ntrip_configs['server'],
-                                   self.ntrip_configs['port'])
+            err = self.connect_to_server(self.ntrip_configs['server'],
+                                         self.ntrip_configs['port'])
+            if err != 0:
+                rospy.logerr('Failed to connect to server: {0}'.format(err))
+                rospy.sleep(1)
+                continue
+
+            status = None
             try:
                 status = self.send_headers()
             except Exception:
                 rospy.logerr('Error when sending headers')
+
             if status == 200:
-                rospy.loginfo('Successfully sent headers')
+                rospy.loginfo('Ready to receive RTCM')
                 break
 
         # Get RTCM data
@@ -107,14 +112,15 @@ class NTRIPClient:
 
             # Send to NTRIP server
             try:
-                self.connection.send(gga)
+                self.connection.send(gga + '\r\n')
             except Exception as e:
                 rospy.logerr('Failed to send GGA sentence')
                 continue
 
             # Parse response
             try:
-                self.read_rtcm()
+                read_bytes = self.read_rtcm()
+                rospy.loginfo('Received RTCM ({0} bytes)'.format(read_bytes))
             except Exception:
                 rospy.logerr('Failed to read RTCM')
                 continue
@@ -140,17 +146,18 @@ class NTRIPClient:
 
     def read_rtcm(self):
         # Keep reading RTCM and send it to the receiver
+        read_bytes = 0
         while True:
-            rtcm = self.connection.recv(1024)
-            rospy.logerr(rtcm)
+            rtcm = self.connection.recv(256)
             # Write to GNSS receiver
             with self.serial_lock:
-                self.serial.write(rtcm.decode('ascii'))
+                sent = self.serial.write(rtcm)
+                read_bytes += len(rtcm)
 
             with self.gga_lock:
                 # Return if there's newer GGA
                 if rospy.is_shutdown() or self.has_new_gga:
-                    return
+                    return read_bytes
 
     @staticmethod
     def is_good_gga(gga, bad_data_quality=None):
