@@ -10,15 +10,15 @@ import javad_delta
 rospy.init_node('javad_delta_node')
 
 ros_configs = {
-    'publish_tf': rospy.get_param('publish_tf', True),
-    'gps_origin_frame': rospy.get_param('gps_origin_frame', 'gps_origin'),
-    'gps_antenna_frame': rospy.get_param('gps_antenna_frame', 'gps_antenna'),
+    'publish_tf': rospy.get_param('~publish_tf', True),
+    'gps_origin_frame': rospy.get_param('~gps_origin_frame', 'gps_origin'),
+    'gps_antenna_frame': rospy.get_param('~gps_antenna_frame', 'gps_antenna'),
     # Required data quality to publish tf
-    'gps_required_quality': rospy.get_param('gps_required_quality', ['4', '5']),
+    'gps_required_quality': rospy.get_param('~gps_required_quality', ['4', '5']),
     # Uses WGS84 by default
-    'gps_src_epsg': rospy.get_param('gps_src_epsg', 4326),
+    'gps_src_epsg': rospy.get_param('~gps_src_epsg', 4326),
     # Earth Centered, Earth Fixed
-    'gps_tgt_epsg': rospy.get_param('gps_tgt_epsg', 4978),
+    'gps_tgt_epsg': rospy.get_param('~gps_tgt_epsg', 4978),
 }
 ntrip_configs = {
     'enable': rospy.get_param('~ntrip_enable'),
