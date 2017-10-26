@@ -5,13 +5,13 @@ gps_antenna_frame: gps_position
 # Only publish tf if data quality is one of the following
 gps_required_quality: ['4', '5']
 # 4326: WGS84
-# 2443: Japan Plane CS 1
+# 2443: Japan Plane Rectangular CS 1
 # ...
-# 2461: Japan Plane CS 19
+# 2461: Japan Plane Rectangular CS 19
 # 2443 + plane_num - 1
-# 2453: Japan Plane CS 10 (for Tohoku area)
+# 2453: Japan Plane Rectangular CS 10 (for Tohoku area)
 gps_src_epsg: 4326
-gps_tgt_epsg: 2453
+gps_tgt_epsg: 2452
 
 # NTRIP Configs
 ntrip_enable: true
