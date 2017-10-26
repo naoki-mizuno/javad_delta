@@ -56,6 +56,6 @@ class GGA:
         if good_data_quality is not None:
             return data_quality in good_data_quality
         if bad_data_quality is not None:
-            return data_quality in bad_data_quality
+            return data_quality not in bad_data_quality
         return True
 
