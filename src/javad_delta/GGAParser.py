@@ -5,7 +5,7 @@ from osgeo import osr
 
 
 class CoordTransformer:
-    def __init__(self, src_epsg=4326, tgt_epsg=4326):
+    def __init__(self, src_epsg=4326, tgt_epsg=4978):
         self.src = osr.SpatialReference()
         self.src.ImportFromEPSG(src_epsg)
         self.tgt = osr.SpatialReference()
