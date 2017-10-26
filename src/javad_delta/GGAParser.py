@@ -9,7 +9,6 @@ class CoordTransformer:
         self.src = osr.SpatialReference()
         self.src.ImportFromEPSG(src_epsg)
         self.tgt = osr.SpatialReference()
-        # Coordinate number starts from 1
         self.tgt.ImportFromEPSG(tgt_epsg)
         self.coord_tf = osr.CoordinateTransformation(self.src, self.tgt)
 

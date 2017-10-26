@@ -9,7 +9,7 @@ gps_required_quality: ['4', '5']
 # ...
 # 2461: Japan Plane Rectangular CS 19
 # 2443 + plane_num - 1
-# 2453: Japan Plane Rectangular CS 10 (for Tohoku area)
+# 2452: Japan Plane Rectangular CS 10 (for Tohoku area)
 gps_src_epsg: 4326
 gps_tgt_epsg: 2452
 
