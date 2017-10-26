@@ -1,7 +1,7 @@
 # ROS Configs
 publish_tf: true
 gps_origin_frame: gps_origin
-gps_antenna_frame: gps_position
+gps_antenna_frame: javad_delta
 # Only publish tf if data quality is one of the following
 gps_required_quality: ['4', '5']
 # 4326: WGS84
