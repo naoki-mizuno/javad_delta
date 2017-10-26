@@ -17,4 +17,5 @@
   <run_depend>nmea_msgs</run_depend>
   <run_depend>nmea_navsat_driver</run_depend>
   <run_depend>python-serial</run_depend>
+  <run_depend>python-gdal</run_depend>
 </package>

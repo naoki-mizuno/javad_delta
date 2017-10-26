@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 
+from GGAParser import GGA
+
 import rospy
-from nmea_msgs.msg import Sentence
 
 from serial import Serial, SerialException
 
@@ -12,19 +13,16 @@ from base64 import b64encode
 
 class NTRIPClient:
     def __init__(self, ntrip_configs, serial_configs):
-        self.__init_gga__(serial_configs)
-        self.__init_rtcm__(ntrip_configs)
+        self.__init_serial__(serial_configs)
+        self.__init_ntrip__(ntrip_configs)
 
-    def __init_gga__(self, serial_configs):
+    def __init_serial__(self, serial_configs):
         # GGA
         self.serial_configs = serial_configs
         self.gga_lock = Lock()
         self.latest_gga = ''
         self.has_new_gga = False
         self.leftover_gga = ''
-        self.nmea_pub = rospy.Publisher('nmea_sentence',
-                                        Sentence,
-                                        queue_size=100)
         self.seq = 0
         self.serial_lock = Lock()
         try:
@@ -36,7 +34,10 @@ class NTRIPClient:
             rospy.signal_shutdown("Error opening serial: %s" % e)
             raise SystemExit
 
-    def __init_rtcm__(self, ntrip_configs):
+    def __init_ntrip__(self, ntrip_configs):
+        if not ntrip_configs['enable']:
+            return
+
         # RTCM
         self.ntrip_configs = ntrip_configs
         user_pass = '{0}:{1}'.format(ntrip_configs['user'],
@@ -54,18 +55,6 @@ class NTRIPClient:
                                   name='rtcm_thread')
         self.rtcm_thread.start()
 
-    def publish_gga_sentence(self):
-        # Read GGA sentence
-        msg = Sentence()
-        msg.header.frame_id = 'gps_origin'
-        msg.header.seq = self.seq
-        self.seq += 1
-        msg.header.stamp = rospy.Time.now()
-        msg.sentence = self.read_gga_sentence()
-        if not NTRIPClient.is_good_gga(msg.sentence):
-            return
-        self.nmea_pub.publish(msg)
-
     def read_gga_sentence(self):
         data = ''
         with self.serial_lock:
@@ -79,15 +68,14 @@ class NTRIPClient:
         return data
 
     def connect_to_server(self, server, port):
-        err_indicator = self.connection.connect_ex((server, int(port)))
-        return err_indicator
-
-    def rtcm_thread_func(self):
         while not rospy.is_shutdown():
-            err = self.connect_to_server(self.ntrip_configs['server'],
-                                         self.ntrip_configs['port'])
+            try:
+                err = self.connection.connect_ex((server, int(port)))
+            except Exception:
+                err = None
+
             if err != 0:
-                rospy.logerr('Failed to connect to server: {0}'.format(err))
+                rospy.logerr('Failed to connect to {0}'.format(server))
                 rospy.sleep(1)
                 continue
 
@@ -101,13 +89,17 @@ class NTRIPClient:
                 rospy.loginfo('Ready to receive RTCM')
                 break
 
+    def rtcm_thread_func(self):
+        self.connect_to_server(self.ntrip_configs['server'],
+                               self.ntrip_configs['port'])
+
         # Get RTCM data
         while not rospy.is_shutdown():
             # Get latest GGA
             with self.gga_lock:
                 gga = self.latest_gga
                 self.has_new_gga = False
-            if not NTRIPClient.is_good_gga(gga, bad_data_quality=['0']):
+            if not GGA.is_good_gga(gga, bad_data_quality=['0']):
                 continue
 
             # Send to NTRIP server
@@ -145,7 +137,7 @@ class NTRIPClient:
         return -1
 
     def read_rtcm(self):
-        # Keep reading RTCM and send it to the receiver
+        # Keep reading RTCM and send it to the receiver until new GGA has arrived
         read_bytes = 0
         while True:
             rtcm = self.connection.recv(256)
@@ -158,17 +150,3 @@ class NTRIPClient:
                 # Return if there's newer GGA
                 if rospy.is_shutdown() or self.has_new_gga:
                     return read_bytes
-
-    @staticmethod
-    def is_good_gga(gga, bad_data_quality=None):
-        if not gga or gga == '':
-            return False
-        if not gga.startswith('$GPGGA'):
-            return False
-        data_quality = gga.split(',')[6]
-        if data_quality == '':
-            return False
-        if bad_data_quality and data_quality in bad_data_quality:
-            return False
-        return True
-

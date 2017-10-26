@@ -1,8 +1,26 @@
-ntrip_enable: True
+# ROS Configs
+publish_tf: true
+gps_origin_frame: gps_origin
+gps_antenna_frame: gps_position
+# Only publish tf if data quality is one of the following
+gps_required_quality: ['4', '5']
+# 4326: WGS84
+# 2443: Japan Plane CS 1
+# ...
+# 2461: Japan Plane CS 19
+# 2443 + plane_num - 1
+# 2453: Japan Plane CS 10 (for Tohoku area)
+gps_src_epsg: 4326
+gps_tgt_epsg: 2453
+
+# NTRIP Configs
+ntrip_enable: true
 ntrip_server: ntrip.jenoba.jp
 ntrip_stream: JVR30
 ntrip_port: 2101
 ntrip_user: foo
 ntrip_password: bar
+
+# Serial Configs
 serial_port: /dev/ttyUSB1
 serial_baud: 115200
