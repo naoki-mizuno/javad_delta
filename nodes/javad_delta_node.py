@@ -61,8 +61,7 @@ def send_transform(msg, configs):
     x, y, z = transformer.transform(fix)
     translation = (x, y, z)
     # No orientation
-    q = tf.transformations.quaternion_from_euler(0, 0, 0)
-    rotation = (q.x, q.y, q.z, q.w)
+    rotation = tf.transformations.quaternion_from_euler(0, 0, 0)
     tf_b = tf.TransformBroadcaster()
     tf_b.sendTransform(translation,
                        rotation,
