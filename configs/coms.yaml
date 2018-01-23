@@ -5,13 +5,16 @@ gps_antenna_frame: javad_delta
 # Only publish tf if data quality is one of the following
 gps_required_quality: ['4', '5']
 # 4326: WGS84
-# 2443: Japan Plane Rectangular CS 1
-# ...
-# 2461: Japan Plane Rectangular CS 19
-# 2443 + plane_num - 1
+# 32653: UTM Zone 53N
+#
+# JGD2000 (Don't use this anymore!)
 # 2452: Japan Plane Rectangular CS 10 (for Tohoku area)
+#
+# JGD2011
+# 6678: Japan Plane Rectangular CS 10
+# 6690: UTM Zone 53N
 gps_src_epsg: 4326
-gps_tgt_epsg: 2452
+gps_tgt_epsg: 32653
 
 # NTRIP Configs
 ntrip_enable: true
