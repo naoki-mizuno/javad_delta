@@ -73,8 +73,11 @@ class NTRIPClient:
                 err = None
 
             if err != 0:
-                rospy.logerr('Failed to connect to {0}'.format(server))
-                rospy.sleep(1)
+                rospy.logerr('Retrying connection in 3 seconds: {0}'.format(server))
+                self.connection.close()
+                rospy.sleep(3)
+                self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.connection.settimeout(10)
                 continue
 
             status = None
@@ -115,6 +118,7 @@ class NTRIPClient:
                 rospy.logerr('Failed to read RTCM')
                 continue
         self.connection.close()
+        rospy.loginfo('Closed connection')
 
     def send_headers(self):
         self.connection.send(self.header)
