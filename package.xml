@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>javad_delta</name>
   <version>0.1.0</version>
   <description>JAVAD DELTA Driver</description>
@@ -13,9 +13,9 @@
   <author>Naoki Mizuno</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>nmea_msgs</run_depend>
-  <run_depend>nmea_navsat_driver</run_depend>
-  <run_depend>python-serial</run_depend>
-  <run_depend>python-gdal</run_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>nmea_msgs</exec_depend>
+  <exec_depend>nmea_navsat_driver</exec_depend>
+  <exec_depend>python-serial</exec_depend>
+  <exec_depend>python-gdal</exec_depend>
 </package>
