@@ -1,0 +1,29 @@
+# ROS Configs
+publish_tf: true
+gnss_origin_frame: gnss_origin
+gnss_antenna_frame: javad_delta
+# Only publish tf if data quality is one of the following
+gnss_required_quality: ['4', '5']
+# 4326: WGS84
+# 32653: UTM Zone 53N
+#
+# JGD2000 (Don't use this anymore!)
+# 2452: Japan Plane Rectangular CS 10 (for Tohoku area)
+#
+# JGD2011
+# 6678: Japan Plane Rectangular CS 10
+# 6690: UTM Zone 54N
+gnss_src_epsg: 4326
+gnss_tgt_epsg: 32654
+
+# NTRIP Configs
+ntrip_enable: true
+ntrip_server: ntrip.terasat.co.jp
+ntrip_stream: VRS_RTCM3(GNSS)
+ntrip_port: 5001
+ntrip_user: foo
+ntrip_password: bar
+
+# Serial Configs
+serial_port: /dev/ttyUSB1
+serial_baud: 115200

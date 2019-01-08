@@ -12,9 +12,9 @@ gnss_required_quality: ['4', '5']
 #
 # JGD2011
 # 6678: Japan Plane Rectangular CS 10
-# 6690: UTM Zone 53N
+# 6690: UTM Zone 54N
 gnss_src_epsg: 4326
-gnss_tgt_epsg: 32653
+gnss_tgt_epsg: 32654
 
 # NTRIP Configs
 ntrip_enable: true

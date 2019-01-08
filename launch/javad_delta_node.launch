@@ -2,9 +2,10 @@
 <launch>
   <arg name="ntrip_user" default="$(env NTRIP_USER)" />
   <arg name="ntrip_password" default="$(env NTRIP_PASSWORD)" />
+  <arg name="ntrip_caster" default="$(env NTRIP_CASTER)" />
 
   <node pkg="javad_delta" type="javad_delta_node.py" name="javad_driver" output="screen">
-    <rosparam command="load" file="$(find javad_delta)/config/coms.yaml" />
+    <rosparam command="load" file="$(find javad_delta)/config/coms_$(arg ntrip_caster).yaml" />
     <param name="ntrip_user" value="$(arg ntrip_user)" />
     <param name="ntrip_password" value="$(arg ntrip_password)" />
   </node>
