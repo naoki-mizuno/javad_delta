@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import rospy
 from nmea_msgs.msg import Sentence

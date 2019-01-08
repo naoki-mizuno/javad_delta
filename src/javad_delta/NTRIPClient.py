@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 from GGAParser import GGA
 
 import rospy

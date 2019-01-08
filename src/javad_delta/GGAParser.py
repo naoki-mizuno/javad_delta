@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 import math
 from osgeo import osr
 
