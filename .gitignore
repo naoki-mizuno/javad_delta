@@ -8,6 +8,6 @@
 !README.md
 !nodes/
 !src/
-!src/*
-!configs/
+!src/*/
+!config/
 !launch/
