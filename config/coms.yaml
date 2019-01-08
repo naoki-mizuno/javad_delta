@@ -1,9 +1,9 @@
 # ROS Configs
 publish_tf: true
-gps_origin_frame: gps_origin
-gps_antenna_frame: javad_delta
+gnss_origin_frame: gnss_origin
+gnss_antenna_frame: javad_delta
 # Only publish tf if data quality is one of the following
-gps_required_quality: ['4', '5']
+gnss_required_quality: ['4', '5']
 # 4326: WGS84
 # 32653: UTM Zone 53N
 #
@@ -13,8 +13,8 @@ gps_required_quality: ['4', '5']
 # JGD2011
 # 6678: Japan Plane Rectangular CS 10
 # 6690: UTM Zone 53N
-gps_src_epsg: 4326
-gps_tgt_epsg: 32653
+gnss_src_epsg: 4326
+gnss_tgt_epsg: 32653
 
 # NTRIP Configs
 ntrip_enable: true
